@@ -21,10 +21,10 @@ body{margin:0;min-height:100vh;padding:14px;font-family:'Noto Sans KR',sans-seri
 .cd{--w:clamp(58px,14vw,94px);width:var(--w);aspect-ratio:2/3;flex:none;filter:drop-shadow(0 3px 2px rgba(0,0,0,.5));
  transform:rotate(var(--r,0deg)) translateY(calc(var(--y,0px) + var(--lift,0px)));transform-origin:50% 115%;transition:transform .14s}
 .cd svg{display:block;width:100%;height:100%}
-.hand,.opp{display:flex;justify-content:center;padding:8px 0}
+.hand,.opp{display:flex;justify-content:center;padding:8px 0;position:relative;z-index:2}
 .hand{min-height:170px}
 .hand .cd+.cd,.opp .cd+.cd{margin-left:calc(var(--w)*var(--ov,.38)*-1)}
-.hand .cd{filter:drop-shadow(0 3px 2px rgba(0,0,0,.5)) brightness(.62) saturate(.75)}
+.hand .cd.no{filter:drop-shadow(0 3px 2px rgba(0,0,0,.5)) brightness(.8) saturate(.85)}
 .hand .cd.ok{filter:drop-shadow(0 3px 2px rgba(0,0,0,.5));cursor:pointer;--lift:-16px}
 .hand .cd.ok:hover,.hand .cd.ok:focus-visible{--lift:-34px;z-index:99!important;outline:none}
 .opp .cd{--w:clamp(40px,9vw,58px);transform-origin:50% -15%}
@@ -39,7 +39,7 @@ body{margin:0;min-height:100vh;padding:14px;font-family:'Noto Sans KR',sans-seri
 .plate{display:inline-block;position:relative;padding:5px 16px 5px 32px;background:var(--paper);border-radius:4px;font:700 21px Gaegu,sans-serif;box-shadow:0 2px 0 rgba(0,0,0,.35),0 6px 10px rgba(0,0,0,.3);transform:rotate(-1deg)}
 .plate::before{content:"";position:absolute;left:10px;top:50%;width:10px;height:10px;margin-top:-5px;border-radius:50%;background:#3b2a1c;box-shadow:inset 0 1px 2px #000}
 .plate.act{background:#ffd95e}
-.top{text-align:center}
+.top{text-align:center;position:relative;z-index:2}
 .say{text-align:center;font:400 26px Jua,sans-serif;color:#f6ecd3;text-shadow:0 2px 0 rgba(0,0,0,.4);min-height:34px}
 .acts{display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap;min-height:70px}
 .btn{font:700 17px 'Noto Sans KR',sans-serif;padding:10px 18px;border:2px solid var(--ink);border-radius:8px;background:var(--paper);color:var(--ink);cursor:pointer;box-shadow:0 3px 0 var(--ink)}
@@ -66,6 +66,12 @@ body{margin:0;min-height:100vh;padding:14px;font-family:'Noto Sans KR',sans-seri
 @media(min-width:1180px){
  body::before{content:"";position:fixed;right:34px;bottom:46px;width:92px;height:92px;border-radius:50%;background:radial-gradient(circle,#2b1507 0 40%,#6b3f1c 41% 46%,#ece6d8 47% 100%);box-shadow:-18px 18px 18px rgba(0,0,0,.4),44px 0 0 -26px #ece6d8}
  body::after{content:"";position:fixed;left:30px;bottom:90px;width:12px;height:240px;border-radius:3px 3px 1px 1px;background:linear-gradient(90deg,#d9a21b,#f5c93a 50%,#c48f12);transform:rotate(18deg);box-shadow:6px 8px 8px rgba(0,0,0,.4)}}
+.manual{max-width:580px;width:100%;max-height:88vh;overflow:auto;text-align:left;transform:none}
+.manual h2{text-align:center}.manual h3{font:400 22px Jua,sans-serif;margin:16px 0 4px}
+.manual p{font:400 15.5px/1.6 'Noto Sans KR',sans-serif;margin:4px 0}
+.crow{display:flex;gap:14px;align-items:center;margin:10px 0;font-size:15px;line-height:1.5}
+.crow .cd{--w:48px;transform:none;filter:drop-shadow(0 2px 1px rgba(0,0,0,.4))}
+.manual .close{display:block;margin:18px auto 0}
 @media(prefers-reduced-motion:reduce){.drop{animation:none}.cd,.chip{transition:none}}
 </style>
 </head>
@@ -89,10 +95,10 @@ const esc=t=>String(t).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 /* ───── 게임 규칙 (순수 함수) ───── */
 function deck(){const d=[];let id=0;const add=(c,v,n=1)=>{for(let i=0;i<n;i++)d.push({id:id++,c,v})};
  'rygb'.split('').forEach(c=>{add(c,'0');for(let i=1;i<=9;i++)add(c,''+i,2);['S','RV','D2'].forEach(v=>add(c,v,2))});
- add('w','W',4);add('w','W4',4);add('w','SH',1);add('w','CU',3);return shuffle(d)}
+ add('w','W',4);add('w','W4',4);add('w','SH',1);return shuffle(d)}
 function deal(s){const d=deck();s.hands=[d.splice(0,7),d.splice(0,7)];let t=d.pop();
  while(!isNum(t)){d.unshift(t);t=d.pop()}
- Object.assign(s,{draw:d,discard:[t],color:t.c,turn:s.round%2,phase:'play',drew:null,pend:null,miss:null,winner:null,rule:s.rule||'',log:[`${s.round+1}번째 판 시작!`]})}
+ Object.assign(s,{draw:d,discard:[t],color:t.c,turn:s.round%2,phase:'play',drew:null,pend:null,miss:null,winner:null,forfeit:null,rule:s.rule||'',log:[`${s.round+1}번째 판 시작!`]})}
 const topCard=s=>s.discard[s.discard.length-1];
 const canPlay=(s,c)=>c.c==='w'||c.c===s.color||c.v===topCard(s).v;
 function draw(s,p,n){for(let i=0;i<n;i++){if(!s.draw.length){const t=s.discard.pop();s.draw=shuffle(s.discard);s.discard=[t]}
@@ -101,8 +107,8 @@ function play(s,p,id,color,rule,uno){
  const h=s.hands[p],o=1-p,card=h.splice(h.findIndex(x=>x.id==id),1)[0];
  const had=card.v==='W4'&&h.some(x=>x.c===s.color);
  s.discard.push(card);s.color=card.c==='w'?color:card.c;s.drew=null;s.miss=(h.length===1&&!uno)?p:null;
- s.log.push(`${s.names[p]}: ${card.c==='w'?'':CN[card.c]+' '}${sym(card)}${card.c==='w'?' → '+CN[color]:''}${card.v==='CU'&&rule?' 「'+rule+'」':''}`);
- if(card.v==='CU')s.rule=rule;
+ s.log.push(`${s.names[p]}: ${card.c==='w'?'':CN[card.c]+' '}${sym(card)}${card.c==='w'?' → '+CN[color]:''}`);
+ 
  const win=!h.length;
  if(card.v==='D2')draw(s,o,2);
  if(win){if(card.v==='W4')draw(s,o,4);
@@ -150,12 +156,14 @@ function tap(id){if(!myTurn()||S.phase!=='play')return;const c=S.hands[me].find(
  if(!canPlay(S,c)||(S.drew!=null&&S.drew!==id))return;
  if(c.c==='w'){pick=id;render()}else go(id)}
 function go(id,color){const c=S.hands[me].find(x=>x.id==id);let rule='';
- if(c.v==='CU')rule=prompt('새 규칙을 적어 주세요 (예: 숫자 7을 내면 손 바꾸기)')||'';
  const s=clone(S);play(s,me,id,color,rule,unoOn);unoOn=false;pick=null;save(s)}
 function drawCard(){if(!myTurn()||S.phase!=='play'||S.drew!=null)return;const s=clone(S);drawOne(s,me);save(s)}
 function pass(){const s=clone(S);s.drew=null;s.turn=1-me;save(s)}
 function resp(c){const s=clone(S);resolve(s,me,c);save(s)}
 function catchUno(){const s=clone(S);draw(s,s.miss,2);s.log.push(`UNO 적발! ${s.names[s.miss]} 2장`);s.miss=null;save(s)}
+function giveUp(){if(!S||S.phase==='over'||S.phase==='wait')return;if(!confirm('기권할까요? 이번 판은 상대가 이겨요.'))return;
+ const s=clone(S),o=1-me;s.gain=s.hands[me].reduce((a,x)=>a+pts(x),0);s.scores[o]+=s.gain;
+ Object.assign(s,{phase:'over',winner:o,forfeit:me,miss:null,pend:null,drew:null});s.log.push(`${s.names[me]}가 기권했어요`);save(s)}
 function next(){const s=clone(S);s.round++;deal(s);save(s)}
 
 /* ───── 카드 그림 (SVG) ───── */
@@ -164,38 +172,69 @@ const T=(x,y,s,fill,size,ex='')=>`<text x="${x}" y="${y}" text-anchor="middle" f
 const ARW='<polygon points="-18,-11 3,-11 3,-19 19,-5 3,9 3,1 -18,1"/>';
 const LINE='stroke="#141414" stroke-width="2.4" paint-order="stroke"';
 function glyph(v,col){
- if(v==='S')return `<circle r="17" fill="none" stroke="${col}" stroke-width="7"/><path d="M-12-12L12 12" stroke="${col}" stroke-width="7"/>`;
- if(v==='RV'||v==='SH')return `<g fill="${col}" ${v==='SH'?LINE:''} transform="rotate(-40)">${ARW}<g transform="rotate(180)">${ARW}</g></g>`;
+ if(v==='S')return `<circle r="17" fill="none" stroke="${col}" stroke-width="7.5"/><path d="M-12-12L12 12" stroke="${col}" stroke-width="7.5"/>`;
+if(v==='RV'||v==='SH')return `<g fill="${col}" ${v==='SH'?LINE:''} transform="rotate(-38) scale(1.12)"><path d="M-20-14.5H2V-20L18-10L2 0V-5.5H-20Z"/><path d="M20 14.5H-2V20L-18 10L-2 0V5.5H20Z"/></g>`;
  if(v==='D2')return `<g stroke="#fff" stroke-width="2.5" fill="${col}"><rect x="-17" y="-17" width="22" height="31" rx="3" transform="rotate(-14)"/><rect x="-5" y="-14" width="22" height="31" rx="3" transform="rotate(10)"/></g>`;
  if(v==='W4')return ['r','y','g','b'].map((k,i)=>`<rect x="-7" y="-11" width="14" height="22" rx="2.5" fill="${COL[k]}" stroke="#fff" stroke-width="1.6" transform="translate(${[-21,-7,7,21][i]} ${[3,-2,-2,3][i]}) rotate(${[-20,-7,7,20][i]})"/>`).join('');
- if(v==='CU')return T(0,15,'?','#fff',46,LINE);
  if(v==='W')return '';
- return T(2.5,19.5,v,'#141414',52)+T(0,17,v,col,52);
+ return T(2.5,21,v,'#141414',56)+T(0,18.5,v,col,56,'stroke="#141414" stroke-width="2.6" paint-order="stroke"');
 }
-const LAB={D2:'+2',W4:'+4',W:'W',CU:'?'};
+const NAME={S:'스킵',RV:'리버스',D2:'드로우 2',W:'와일드',W4:'와일드 드로우 4',SH:'와일드 셔플 핸드'};
+const nm=c=>(c.c==='w'?'':CN[c.c]+' ')+(NAME[c.v]||c.v);
+const LAB={D2:'+2',W4:'+4'};
+const PIE='<g stroke="#fff" stroke-width="1.6"><path d="M0 0L-11 0A11 11 0 0 1 0-11Z" fill="#ed1c24"/><path d="M0 0L0-11A11 11 0 0 1 11 0Z" fill="#fcd116"/><path d="M0 0L11 0A11 11 0 0 1 0 11Z" fill="#00a651"/><path d="M0 0L0 11A11 11 0 0 1-11 0Z" fill="#0072bc"/></g>';
 function corner(c){const v=c.v;
- if(isNum(c)||LAB[v])return T(0,7,LAB[v]||v,'#fff',19,'stroke="rgba(0,0,0,.45)" stroke-width="1.6" paint-order="stroke"');
- return `<g transform="scale(.42)">${glyph(v,'#fff')}</g>`}
-const QUAD='<g clip-path="url(#ov)"><rect x="-40" y="-60" width="40" height="60" fill="#ed1c24"/><rect x="0" y="-60" width="40" height="60" fill="#fcd116"/><rect x="0" y="0" width="40" height="60" fill="#00a651"/><rect x="-40" y="0" width="40" height="60" fill="#0072bc"/></g>';
+ if(isNum(c)||LAB[v])return T(0,9,LAB[v]||v,'#fff',26,'stroke="rgba(0,0,0,.55)" stroke-width="2.2" paint-order="stroke"');
+ if(v==='W')return PIE;
+ return `<g transform="scale(.55)">${glyph(v,'#fff')}</g>`}
+const QUAD='<path d="M0 0L-32 0A32 54 0 0 1 0-54Z" fill="#ed1c24"/><path d="M0 0L0-54A32 54 0 0 1 32 0Z" fill="#fcd116"/><path d="M0 0L32 0A32 54 0 0 1 0 54Z" fill="#00a651"/><path d="M0 0L0 54A32 54 0 0 1-32 0Z" fill="#0072bc"/>';
 function face(c,tint){
  const w=c.c==='w',col=COL[c.c],rim=tint?COL[tint]:'#fff';
- const oval=`<g transform="translate(50 75) rotate(-28)"><ellipse rx="34.5" ry="56.5" fill="#fff"/>${w?(c.v==='W4'?'<ellipse rx="32" ry="54" fill="#141414"/>':QUAD):''}</g>`;
+ const oval=`<g transform="translate(50 75) rotate(28)"><ellipse rx="34.5" ry="56.5" fill="#fff"/>${w?(c.v==='W4'?'<ellipse rx="32" ry="54" fill="#141414"/>':QUAD):''}</g>`;
  const gl=`<g transform="translate(50 75)">${glyph(c.v,w?'#fff':col)}</g>`;
- return `<svg viewBox="0 0 100 150" role="img" aria-label="${w?'':CN[c.c]+' '}${sym(c)}"><rect width="100" height="150" rx="10" fill="${rim}"/><rect x="5" y="5" width="90" height="140" rx="7" fill="${col}"/>${oval}${gl}<g transform="translate(16 24)">${corner(c)}</g><g transform="translate(84 126) rotate(180)">${corner(c)}</g></svg>`}
-const BACK=`<svg viewBox="0 0 100 150"><rect width="100" height="150" rx="10" fill="#141414"/><rect x="3" y="3" width="94" height="144" rx="8" fill="none" stroke="#3a3a3a" stroke-width="1.5"/><g transform="translate(50 75) rotate(-28)"><ellipse rx="35" ry="57" fill="#ed1c24"/></g><g transform="rotate(-28 50 75)">${T(52,87,'UNO','#141414',31)}${T(50,85,'UNO','#fcd116',31,'stroke="#141414" stroke-width="1" paint-order="stroke"')}</g></svg>`;
+ return `<svg viewBox="0 0 100 150" role="img" aria-label="${nm(c)}"><rect width="100" height="150" rx="10" fill="${rim}"/><rect x="5" y="5" width="90" height="140" rx="7" fill="${col}"/>${oval}${gl}<g transform="translate(19 27)">${corner(c)}</g><g transform="translate(81 123) rotate(180)">${corner(c)}</g></svg>`}
+const BACK=`<svg viewBox="0 0 100 150"><rect width="100" height="150" rx="10" fill="#141414"/><rect x="3" y="3" width="94" height="144" rx="8" fill="none" stroke="#3a3a3a" stroke-width="1.5"/><g transform="translate(50 75) rotate(28)"><ellipse rx="35" ry="57" fill="#ed1c24"/></g><g transform="rotate(28 50 75)">${T(52,87,'UNO','#141414',31)}${T(50,85,'UNO','#fcd116',31,'stroke="#141414" stroke-width="1" paint-order="stroke"')}</g></svg>`;
 const LOGO=`<svg class="logo" viewBox="0 0 360 200" role="img" aria-label="UNO"><g transform="rotate(-8 180 100)"><ellipse cx="180" cy="100" rx="158" ry="84" fill="#141414"/><ellipse cx="180" cy="100" rx="150" ry="76" fill="#ed1c24" stroke="#fff" stroke-width="8"/>${T(188,140,'UNO','#141414',108,'letter-spacing="4"')}${T(180,132,'UNO','#fcd116',108,'letter-spacing="4" stroke="#141414" stroke-width="5" paint-order="stroke"')}</g></svg>`;
 
+/* ───── 설명서 ───── */
+let man=0;
+const MROW=(c,t,d)=>`<div class="crow">${face(c)}<div><b>${t}</b><br>${d}</div></div>`;
+const MANUAL=()=>!man?'':`<div class="veil" onclick="if(event.target===this){man=0;render()}"><div class="sheet manual"><h2>우노 설명서</h2>
+ <h3>시작하는 법</h3><p>한 명이 이름을 적고 <b>방 만들기</b>를 누르면 4자리 방 코드가 나와요. 친구가 같은 코드를 <b>들어가기</b>에 넣으면 바로 시작해요.</p>
+ <h3>이기는 법</h3><p>7장으로 시작해서, 손에 든 카드를 가장 먼저 모두 내면 이겨요. 이긴 사람은 상대 손에 남은 카드의 점수를 가져가요.</p>
+ <h3>내 차례에 하는 일</h3><p>가운데 놓인 카드와 <b>색이 같거나, 숫자·기호가 같은</b> 카드, 또는 와일드 카드를 한 장 낼 수 있어요. 낼 수 있는 카드는 위로 올라와 있어요. 낼 카드가 없으면 뽑을 카드 더미를 눌러 한 장 뽑아요. 뽑은 카드를 낼 수 있으면 바로 내도 돼요.</p>
+ <h3>UNO!</h3><p>손에 카드가 2장일 때 한 장을 내서 1장이 남게 되면, 내기 전에 <b>UNO!</b> 버튼을 먼저 눌러야 해요. 깜빡하면 상대가 <b>UNO 안 외쳤어요!</b>로 잡아내고, 나는 카드 2장을 받아요.</p>
+ <h3>특수 카드</h3>
+ ${MROW({c:'r',v:'S'},'스킵','상대의 차례를 건너뛰어요. 내가 한 번 더 내요.')}
+ ${MROW({c:'b',v:'RV'},'리버스','둘이 할 때는 스킵과 똑같아요.')}
+ ${MROW({c:'y',v:'D2'},'드로우 2','상대가 카드 2장을 받고 차례를 건너뛰어요.')}
+ ${MROW({c:'w',v:'W'},'와일드','언제든 낼 수 있고, 다음 색을 내가 정해요.')}
+ ${MROW({c:'w',v:'W4'},'와일드 드로우 4','색을 정하고, 상대가 4장을 받아요. 원래는 지금 색의 카드가 없을 때만 내야 해요. 상대는 <b>챌린지</b>할 수 있어요. 규칙을 어겼으면 낸 사람이 4장, 지켰으면 챌린지한 사람이 6장을 받아요.')}
+ ${MROW({c:'w',v:'SH'},'와일드 셔플 핸드','두 사람의 손패를 모아 섞어서 다시 나눠요. 색은 내가 정해요.')}
+ <h3>점수</h3><p>숫자 카드는 적힌 숫자, 스킵·리버스·드로우 2는 20점, 와일드·와일드 드로우 4는 50점, 와일드 셔플 핸드는 40점이에요.</p>
+ <button class="btn hot close" onclick="man=0;render()">닫기</button></div></div>`;
+
 /* ───── 화면 ───── */
-let lastTop=null;
+let lastTop=null,prevMine=new Set(),prevOpp=0,fRound=-1;
 const fan=(inner,i,n,sg,cls,attr='')=>{const d=i-(n-1)/2,k=Math.min(5,34/Math.max(n,1));
  return `<div class="cd ${cls}" style="--r:${sg*d*k}deg;--y:${sg*d*d*(n>9?.5:1.4)}px;z-index:${i}" ${attr}>${inner}</div>`};
+const ovOf=(x,w,f)=>{if(x<2)return .3;const step=Math.min(w*f,(Math.min(innerWidth-70,880)-w)/(x-1));return Math.min(.85,Math.max(.1,1-step/w))};
+function fly(){const hs=[...document.querySelectorAll('.hand .cd')],os=[...document.querySelectorAll('.opp .cd')],pile=document.querySelector('.pilebox .stack');
+ const cur=new Set(hs.map(e=>e.dataset.id)),quiet=matchMedia('(prefers-reduced-motion:reduce)').matches;
+ if(pile&&!quiet){const pr=pile.getBoundingClientRect(),px=pr.left+pr.width/2,py=pr.top+pr.height/2;let k=0;
+  const go=(el,j)=>{const r=el.getBoundingClientRect();el.animate([{transform:`translate(${px-r.left-r.width/2}px,${py-r.top-r.height/2}px) rotate(0deg) scale(1.08)`,opacity:.1}],{duration:480,delay:j*85,easing:'cubic-bezier(.2,.8,.3,1)',fill:'backwards'})};
+  for(let i=0;i<Math.max(hs.length,os.length);i++){if(hs[i]&&!prevMine.has(hs[i].dataset.id))go(hs[i],k++);if(os[i]&&i>=prevOpp)go(os[i],k++)}}
+ prevMine=cur;prevOpp=os.length}
+addEventListener('resize',()=>{if(S&&S.phase!=='wait')render()});
 function render(){const A=document.getElementById('app');
- if(!S){A.innerHTML=`<div class="lobby">${LOGO}<div class="slip"><input id="nm" placeholder="내 이름" maxlength="8" autocomplete="off"><button class="btn hot" onclick="create()">방 만들기</button><div class="or">친구가 만든 방이 있다면</div><input id="cd" placeholder="방 코드" maxlength="4" autocomplete="off"><button class="btn" onclick="join()">들어가기</button></div></div>`;return}
- if(S.phase==='wait'){A.innerHTML=`<div class="lobby">${LOGO}<p class="say2">친구에게 이 방 코드를 알려 주세요</p><div class="tiles">${code.split('').map(x=>`<span>${x}</span>`).join('')}</div><p class="say2">친구가 들어오면 바로 시작해요</p></div>`;return}
+ if(!S){A.innerHTML=`<div class="lobby">${LOGO}<div class="slip"><input id="nm" placeholder="내 이름" maxlength="8" autocomplete="off"><button class="btn hot" onclick="create()">방 만들기</button><div class="or">친구가 만든 방이 있다면</div><input id="cd" placeholder="방 코드" maxlength="4" autocomplete="off"><button class="btn" onclick="join()">들어가기</button></div><p><button class="btn" style="margin-top:16px" onclick="man=1;render()">설명서 보기</button></p></div>${MANUAL()}`;return}
+ if(S.phase==='wait'){A.innerHTML=`<div class="lobby">${LOGO}<p class="say2">친구에게 이 방 코드를 알려 주세요</p><div class="tiles">${code.split('').map(x=>`<span>${x}</span>`).join('')}</div><p class="say2">친구가 들어오면 바로 시작해요</p><p><button class="btn" onclick="man=1;render()">설명서 보기</button></p></div>${MANUAL()}`;return}
+ if(S.round!==fRound){prevMine=new Set();prevOpp=0;fRound=S.round;lastTop=null}
+ const dealing=prevMine.size===0&&prevOpp===0;
  const o=1-me,N=S.names,mine=[...S.hands[me]].sort((a,b)=>(a.c+a.v).localeCompare(b.c+b.v)),mt=myTurn(),pl=S.phase==='play',t=topCard(S),n=mine.length,on=S.hands[o].length;
  const isNew=t.id!==lastTop;lastTop=t.id;
  const dis=S.discard.slice(-3).map((c,k,a)=>{const last=k===a.length-1;
-  return `<div class="cd ${last&&isNew?'drop':''}" style="--r:${(c.id*47)%23-11}deg;--x:${(c.id*13)%9-4}px">${face(c,last&&c.c==='w'?S.color:'')}</div>`}).join('');
+  return `<div class="cd ${last&&isNew?'drop':''}" style="--r:${(c.id*47)%23-11}deg;--x:${(c.id*13)%9-4}px;${last&&isNew&&dealing?'animation-delay:1.7s;animation-fill-mode:backwards':''}">${face(c,last&&c.c==='w'?S.color:'')}</div>`}).join('');
  const drw=Array.from({length:Math.max(1,Math.min(4,Math.ceil(S.draw.length/12)))},(_,k)=>`<div class="cd" style="--y:${-k*2}px;--x:${k}px">${BACK}</div>`).join('');
  const canDraw=pl&&mt&&S.drew==null;
  let acts='';
@@ -204,23 +243,24 @@ function render(){const A=document.getElementById('app');
  if(pl&&mt&&S.miss===o)acts+=`<button class="btn hot" onclick="catchUno()">UNO 안 외쳤어요!</button>`;
  if(S.phase!=='over'&&n<=2)acts+=`<button class="uno ${unoOn?'on':''}" onclick="unoOn=!unoOn;render()" aria-pressed="${unoOn}">UNO!</button>`;
  const say=S.phase==='over'?'':S.phase==='challenge'?(mt?`${esc(N[S.pend.by])}가 와일드 드로우 4를 냈어요`:'상대가 고르는 중이에요'):mt?'내 차례예요':`${esc(N[o])}의 차례`;
- const ov=x=>x>12?.62:x>8?.5:.38;
+ const hw=Math.min(94,Math.max(58,innerWidth*.14)),ow=Math.min(58,Math.max(40,innerWidth*.09));
  A.innerHTML=`<div class="mat">
   <div class="top"><span class="plate ${mt?'':'act'}">${esc(N[o])} · ${S.scores[o]}점</span>
-   <div class="opp" style="--ov:${ov(on)}">${S.hands[o].map((_,i)=>fan(BACK,i,on,-1,'')).join('')}</div></div>
+   <div class="opp" style="--ov:${ovOf(on,ow,.45)}">${S.hands[o].map((_,i)=>fan(BACK,i,on,-1,'')).join('')}</div></div>
   <div class="mid">
    <div class="pilebox"><div class="stack ${canDraw?'can':''}" ${canDraw?'tabindex="0" role="button" aria-label="카드 뽑기" onclick="drawCard()" onkeydown="if(event.key===\'Enter\')drawCard()"':''}>${drw}</div>뽑을 카드 ${S.draw.length}장</div>
    <div class="pilebox"><div class="stack">${dis}</div><span class="dot" style="background:${COL[S.color]}"></span> ${CN[S.color]}</div>
   </div>
   <div class="say">${say}</div>
   <div class="acts">${acts}</div>
-  <div class="hand" style="--ov:${ov(n)}">${mine.map((c,i)=>{const ok=pl&&mt&&(S.drew==null?canPlay(S,c):c.id===S.drew);
-   return fan(face(c),i,n,1,ok?'ok':'',ok?`tabindex="0" role="button" onclick="tap(${c.id})" onkeydown="if(event.key===\'Enter\')tap(${c.id})"`:'')}).join('')}</div>
-  <div class="foot"><span class="plate ${mt?'act':''}">${esc(N[me])} · ${S.scores[me]}점</span>
-   <div class="note">${S.rule?'규칙: '+esc(S.rule)+'<br>':''}${S.log.map(esc).join('<br>')}</div></div>
-  ${S.phase==='over'?`<div class="veil"><div class="sheet"><h2>${S.winner===me?'이겼어요!':esc(N[S.winner])+' 승리'}</h2><p>${esc(N[S.winner])}가 ${S.gain}점을 가져가요</p><p>${esc(N[0])} ${S.scores[0]} : ${S.scores[1]} ${esc(N[1])}</p>${me===0?'<button class="btn hot" onclick="next()">다음 판</button>':'<p>방장이 다음 판을 시작해요</p>'}</div></div>`:''}
+  <div class="hand" style="--ov:${ovOf(n,hw,.8)}">${mine.map((c,i)=>{const ok=pl&&mt&&(S.drew==null?canPlay(S,c):c.id===S.drew);
+   return fan(face(c),i,n,1,ok?'ok':(pl&&mt?'no':''),`data-id="${c.id}" title="${nm(c)}" ${ok?`tabindex="0" role="button" onclick="tap(${c.id})" onkeydown="if(event.key===\'Enter\')tap(${c.id})"`:''}`)}).join('')}</div>
+  <div class="foot"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="plate ${mt?'act':''}">${esc(N[me])} · ${S.scores[me]}점</span><button class="btn" onclick="man=1;render()">설명서</button>${S.phase!=='over'?'<button class="btn" onclick="giveUp()">기권</button>':''}</div>
+   <div class="note">${S.log.map(esc).join('<br>')}</div></div>
+  ${S.phase==='over'?`<div class="veil"><div class="sheet"><h2>${S.forfeit!=null?(S.forfeit===me?'기권했어요':esc(N[S.forfeit])+'가 기권했어요'):S.winner===me?'이겼어요!':esc(N[S.winner])+' 승리'}</h2><p>${esc(N[S.winner])}가 ${S.gain}점을 가져가요</p><p>${esc(N[0])} ${S.scores[0]} : ${S.scores[1]} ${esc(N[1])}</p>${me===0?'<button class="btn hot" onclick="next()">다음 판</button>':'<p>방장이 다음 판을 시작해요</p>'}</div></div>`:''}
   ${pick!=null?`<div class="veil"><div class="sheet"><h2>무슨 색으로 할까요?</h2><div class="chips">${'rygb'.split('').map(c=>`<div class="chip" tabindex="0" role="button" aria-label="${CN[c]}" style="background:${COL[c]}" onclick="go(${pick},'${c}')" onkeydown="if(event.key==='Enter')go(${pick},'${c}')"></div>`).join('')}</div></div></div>`:''}
- </div>`}
+ </div>${MANUAL()}`;
+ fly()}
 resume().then(render);
 </script>
 </body>
